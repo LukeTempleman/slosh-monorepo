@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  # ============================================================
+  # GONXT BACKEND (Port 5000)
+  # ============================================================
+  
+  gonxt_postgres:
+    image: postgres:15-alpine
+    container_name: gonxt_postgres
+    environment:
+      POSTGRES_USER: gonxt_user
+      POSTGRES_PASSWORD: gonxt_password
+      POSTGRES_DB: gonxt_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - gonxt_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gonxt_user -d gonxt_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gonxt_network
+    labels:
+      - "com.slosh.backend=gonxt"
+
+  gonxt_pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gonxt_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gonxt.local
+      PGADMIN_DEFAULT_PASSWORD: admin@123
+    ports:
+      - "5050:80"
+    depends_on:
+      - gonxt_postgres
+    networks:
+      - gonxt_network
+    labels:
+      - "com.slosh.backend=gonxt"
+
+  gonxt_flask:
+    build:
+      context: "./GONXT backend"
+      dockerfile: Dockerfile
+    container_name: gonxt_flask
+    env_file:
+      - "./GONXT backend/.env"
+    environment:
+      DATABASE_URL: postgresql://gonxt_user:gonxt_password@gonxt_postgres:5432/gonxt_db
+    ports:
+      - "5000:5000"
+    depends_on:
+      gonxt_postgres:
+        condition: service_healthy
+    volumes:
+      - "./GONXT backend:/app"
+    networks:
+      - gonxt_network
+      - backend_network
+    restart: unless-stopped
+    labels:
+      - "com.slosh.backend=gonxt"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ============================================================
+  # MANUFACTURERS BACKEND (Port 5001)
+  # ============================================================
+  
+  manu_postgres:
+    image: postgres:15-alpine
+    container_name: manu_postgres
+    environment:
+      POSTGRES_USER: slosh_user
+      POSTGRES_PASSWORD: slosh_password
+      POSTGRES_DB: slosh_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - manu_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U slosh_user -d slosh_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - manu_network
+    labels:
+      - "com.slosh.backend=manu"
+
+  manu_pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: manu_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@manu.local
+      PGADMIN_DEFAULT_PASSWORD: admin@123
+    ports:
+      - "5051:80"
+    depends_on:
+      - manu_postgres
+    networks:
+      - manu_network
+    labels:
+      - "com.slosh.backend=manu"
+
+  manu_flask:
+    build:
+      context: "./manu backend"
+      dockerfile: Dockerfile
+    container_name: manu_flask
+    env_file:
+      - "./manu backend/.env"
+    environment:
+      DATABASE_URL: postgresql://slosh_user:slosh_password@manu_postgres:5432/slosh_db
+      PORT: 5000
+    ports:
+      - "5001:5000"
+    depends_on:
+      manu_postgres:
+        condition: service_healthy
+    volumes:
+      - "./manu backend:/app"
+    networks:
+      - manu_network
+      - backend_network
+    restart: unless-stopped
+    labels:
+      - "com.slosh.backend=manu"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/auth/me"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  gonxt_postgres_data:
+  manu_postgres_data:
+
+networks:
+  gonxt_network:
+    driver: bridge
+  manu_network:
+    driver: bridge
+  backend_network:
+    driver: bridge

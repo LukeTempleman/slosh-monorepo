@@ -1,0 +1,761 @@
+{
+  "info": {
+    "_postman_id": "slosh-multi-backend-collection",
+    "name": "Slosh Multi-Backend API",
+    "description": "Complete API collection for GONXT and Manufacturers backends",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GONXT Backend (Port 5000)",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Register User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@gonxt.com\",\n  \"password\": \"admin@123\",\n  \"role\": \"admin\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/register",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "register"]
+                }
+              }
+            },
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const response = pm.response.json();",
+                      "  pm.environment.set('gonxt_access_token', response.access_token);",
+                      "  pm.environment.set('gonxt_refresh_token', response.refresh_token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/login",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "Get Current User",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/me",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "me"]
+                }
+              }
+            },
+            {
+              "name": "Refresh Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const response = pm.response.json();",
+                      "  pm.environment.set('gonxt_access_token', response.access_token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_refresh_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/refresh",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "refresh"]
+                }
+              }
+            },
+            {
+              "name": "List All Users (Admin)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/admin/users",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "admin", "users"]
+                }
+              }
+            },
+            {
+              "name": "Update User Role (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"user\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/admin/users/{{user_id}}/role",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "admin", "users", "{{user_id}}", "role"]
+                }
+              }
+            },
+            {
+              "name": "Update User Status (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"is_active\": true\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/admin/users/{{user_id}}/status",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "admin", "users", "{{user_id}}", "status"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "API Keys Management",
+          "item": [
+            {
+              "name": "Create API Key",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "  const response = pm.response.json();",
+                      "  pm.environment.set('gonxt_api_key_id', response.id);",
+                      "  pm.environment.set('gonxt_api_code', response.code);",
+                      "  pm.environment.set('gonxt_api_manu_code', response.manufacturers_code);",
+                      "  pm.environment.set('gonxt_api_verify_code', response.api_verification_code);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Payment Processing Key\",\n  \"description\": \"Key for integrating payment processing system\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys"]
+                }
+              }
+            },
+            {
+              "name": "List API Keys",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys"]
+                }
+              }
+            },
+            {
+              "name": "Get API Key Info",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys/{{gonxt_api_key_id}}",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys", "{{gonxt_api_key_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Get All Codes (Authenticated)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys/{{gonxt_api_key_id}}/codes",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys", "{{gonxt_api_key_id}}", "codes"]
+                }
+              }
+            },
+            {
+              "name": "Verify Code (Public)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"{{gonxt_api_verify_code}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys/verify",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys", "verify"]
+                }
+              }
+            },
+            {
+              "name": "Delete API Key",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys/{{gonxt_api_key_id}}",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys", "{{gonxt_api_key_id}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gonxt_url}}/api/health",
+              "host": ["{{gonxt_url}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Manufacturers Backend (Port 5001)",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Register User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"manu_admin\",\n  \"email\": \"admin@manu.com\",\n  \"password\": \"admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/register",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "register"]
+                }
+              }
+            },
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const response = pm.response.json();",
+                      "  pm.environment.set('manu_access_token', response.access_token);",
+                      "  pm.environment.set('manu_refresh_token', response.refresh_token);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"manu_admin\",\n  \"password\": \"admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/login",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "Get Current User",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/me",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "me"]
+                }
+              }
+            },
+            {
+              "name": "Set Own Secret Key",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"secret\": \"my-custom-secret-key-123\"\n}"
+                },
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/me/secret-key",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "me", "secret-key"]
+                }
+              }
+            },
+            {
+              "name": "Get Own Secret Key",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/me/secret-key",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "me", "secret-key"]
+                }
+              }
+            },
+            {
+              "name": "Generate Own Secret Key",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/me/secret-key/generate",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "me", "secret-key", "generate"]
+                }
+              }
+            },
+            {
+              "name": "Reset Own Secret Key",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/me/secret-key",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "me", "secret-key"]
+                }
+              }
+            },
+            {
+              "name": "List All Users (Admin)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/admin/users",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "admin", "users"]
+                }
+              }
+            },
+            {
+              "name": "Update User Role (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"user\"\n}"
+                },
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/admin/users/{{manu_user_id}}/role",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "admin", "users", "{{manu_user_id}}", "role"]
+                }
+              }
+            },
+            {
+              "name": "Update User Status (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"is_active\": true\n}"
+                },
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/admin/users/{{manu_user_id}}/status",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "admin", "users", "{{manu_user_id}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Set User Secret Key (Admin)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"secret\": \"custom-secret-for-user-123\"\n}"
+                },
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/admin/users/{{manu_user_id}}/secret-key",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "admin", "users", "{{manu_user_id}}", "secret-key"]
+                }
+              }
+            },
+            {
+              "name": "Get User Secret Key (Admin)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{manu_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{manu_url}}/api/auth/admin/users/{{manu_user_id}}/secret-key",
+                  "host": ["{{manu_url}}"],
+                  "path": ["api", "auth", "admin", "users", "{{manu_user_id}}", "secret-key"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Integration Tests",
+      "item": [
+        {
+          "name": "Full API Key Dual Encryption Flow",
+          "item": [
+            {
+              "name": "1. GONXT: Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/auth/login",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "2. GONXT: Create API Key (Dual Encryption)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Integration Test Key\",\n  \"description\": \"Testing dual encryption flow\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys"]
+                }
+              }
+            },
+            {
+              "name": "3. GONXT: Verify Code (Using API Code)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"{{gonxt_api_verify_code}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys/verify",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys", "verify"]
+                }
+              }
+            },
+            {
+              "name": "4. GONXT: Retrieve All Three Codes",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{gonxt_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gonxt_url}}/api/keys/{{gonxt_api_key_id}}/codes",
+                  "host": ["{{gonxt_url}}"],
+                  "path": ["api", "keys", "{{gonxt_api_key_id}}", "codes"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "gonxt_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "manu_url",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "manu_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "manu_refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_api_key_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_api_code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_api_manu_code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_api_verify_code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "manu_user_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

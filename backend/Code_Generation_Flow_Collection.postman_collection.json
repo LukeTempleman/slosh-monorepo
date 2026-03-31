@@ -1,0 +1,594 @@
+{
+  "info": {
+    "name": "Code Generation & Verification Flow",
+    "description": "Complete workflow for testing code generation with dual encryption and secret key management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Setup & Authentication",
+      "item": [
+        {
+          "name": "1. Register Admin on Manufacturers Backend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    pm.environment.set('manu_admin_token', pm.response.json().token);",
+                  "    pm.test('Admin registered successfully', () => {",
+                  "        pm.expect(pm.response.json().message).to.include('registered');",
+                  "    });",
+                  "} else if (pm.response.code === 409) {",
+                  "    pm.test('Admin already exists - will login next', () => {",
+                  "        pm.expect(pm.response.json().message).to.include('exists');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@manu.test\",\n  \"password\": \"Admin123!\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "2. Login Admin on Manufacturers Backend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const token = pm.response.json().token;",
+                  "    pm.environment.set('manu_admin_token', token);",
+                  "    pm.test('Login successful', () => {",
+                  "        pm.expect(token).to.be.ok;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "3. Register Admin on GONXT Backend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    pm.test('Admin registered on GONXT', () => {",
+                  "        pm.expect(pm.response.json().message).to.include('registered');",
+                  "    });",
+                  "} else if (pm.response.code === 409) {",
+                  "    pm.test('Admin already exists', () => {",
+                  "        pm.expect(pm.response.json().message).to.include('exists');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@gonxt.test\",\n  \"password\": \"Admin123!\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "4. Login Admin on GONXT Backend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const token = pm.response.json().token;",
+                  "    pm.environment.set('gonxt_admin_token', token);",
+                  "    pm.test('GONXT login successful', () => {",
+                  "        pm.expect(token).to.be.ok;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Secret Key Management",
+      "item": [
+        {
+          "name": "1. Generate Fernet Key (Manual - Use Result Below)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// This request generates a valid Fernet encryption key",
+                  "// Copy the key_value from the response and use it in the next request",
+                  "// Example key: 'ZAOAQSr95FqNr7Q9hYjtcU1cq6e5CGEAhh7zFL9y-zw='",
+                  "",
+                  "const keyValue = 'ZAOAQSr95FqNr7Q9hYjtcU1cq6e5CGEAhh7zFL9y-zw=';",
+                  "pm.environment.set('secret_key', keyValue);",
+                  "pm.test('Key is set', () => {",
+                  "    pm.expect(pm.environment.get('secret_key')).to.be.ok;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/api/internal/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "internal", "health"]
+            }
+          }
+        },
+        {
+          "name": "2. Set Global Secret Key (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const keyId = pm.response.json().id;",
+                  "    pm.environment.set('secret_key_id', keyId);",
+                  "    pm.test('Secret key set successfully', () => {",
+                  "        pm.expect(pm.response.json().key_name).to.equal('global_secret_key');",
+                  "        pm.expect(pm.response.json().is_active).to.be.true;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{manu_admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key_value\": \"ZAOAQSr95FqNr7Q9hYjtcU1cq6e5CGEAhh7zFL9y-zw=\",\n  \"key_name\": \"global_secret_key\",\n  \"description\": \"Global secret key for code encryption\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5001/api/admin/secret-key",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "admin", "secret-key"]
+            }
+          }
+        },
+        {
+          "name": "3. Get Current Secret Key (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.test('Secret key retrieved', () => {",
+                  "        pm.expect(data.is_active).to.be.true;",
+                  "        pm.expect(data.key_value).to.be.ok;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{manu_admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/api/admin/secret-key",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["api", "admin", "secret-key"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Code Generation & Verification",
+      "item": [
+        {
+          "name": "1. Generate Random Code (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.environment.set('generated_code_id', data.id);",
+                  "    pm.environment.set('generated_original_code', data.original_code);",
+                  "    pm.environment.set('generated_hashed_code', data.hashed_code);",
+                  "    ",
+                  "    pm.test('Code generated successfully', () => {",
+                  "        pm.expect(data.original_code).to.be.ok;",
+                  "        pm.expect(data.hashed_code).to.be.ok;",
+                  "        pm.expect(data.original_code).to.have.lengthOf(10);",
+                  "        pm.expect(data.is_active).to.be.true;",
+                  "    });",
+                  "    ",
+                  "    console.log('Generated Code Details:');",
+                  "    console.log('Original Code: ' + data.original_code);",
+                  "    console.log('Hashed Code: ' + data.hashed_code);",
+                  "    console.log('Code ID: ' + data.id);",
+                  "} else {",
+                  "    pm.test('Code generation failed', () => {",
+                  "        pm.expect(pm.response.code).to.be.below(400);",
+                  "    });",
+                  "    console.log('Response:', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{gonxt_admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code_name\": \"Test Code\",\n  \"description\": \"Test code for verification flow\",\n  \"purpose\": \"testing\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/codes/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "codes", ""]
+            }
+          }
+        },
+        {
+          "name": "2. Verify Generated Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.test('Code verified successfully', () => {",
+                  "        pm.expect(data.original_code).to.equal(pm.environment.get('generated_original_code'));",
+                  "        pm.expect(data.message).to.include('verified');",
+                  "    });",
+                  "    console.log('Verification Result:');",
+                  "    console.log('Original Code Match: ' + (data.original_code === pm.environment.get('generated_original_code')));",
+                  "} else {",
+                  "    pm.test('Code verification failed', () => {",
+                  "        console.log('Response:', pm.response.text());",
+                  "        pm.expect(pm.response.code).to.be.below(400);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{gonxt_admin_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hashed_code\": \"{{generated_hashed_code}}\",\n  \"secret_key\": \"ZAOAQSr95FqNr7Q9hYjtcU1cq6e5CGEAhh7zFL9y-zw=\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/codes/verify",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "codes", "verify"]
+            }
+          }
+        },
+        {
+          "name": "3. List All Codes (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const codes = pm.response.json();",
+                  "    pm.test('Retrieved codes list', () => {",
+                  "        pm.expect(Array.isArray(codes) || codes.codes).to.be.ok;",
+                  "    });",
+                  "    console.log('Total codes: ' + (Array.isArray(codes) ? codes.length : codes.codes.length));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{gonxt_admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/codes/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "codes", ""]
+            }
+          }
+        },
+        {
+          "name": "4. Get Code Details (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const code = pm.response.json();",
+                  "    pm.test('Retrieved code details', () => {",
+                  "        pm.expect(code.id).to.be.ok;",
+                  "        pm.expect(code.original_code).to.be.ok;",
+                  "        pm.expect(code.hashed_code).to.be.ok;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{gonxt_admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/codes/{{generated_code_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "codes", "{{generated_code_id}}"]
+            }
+          }
+        },
+        {
+          "name": "5. Delete Code (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 204) {",
+                  "    pm.test('Code deleted successfully', () => {",
+                  "        pm.expect(pm.response.code).to.be.below(300);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{gonxt_admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/codes/{{generated_code_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "codes", "{{generated_code_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Complete Test Workflow",
+      "item": [
+        {
+          "name": "Run Full Flow (Sequence)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Full workflow executed', () => {",
+                  "    pm.expect(pm.environment.get('gonxt_admin_token')).to.be.ok;",
+                  "    pm.expect(pm.environment.get('manu_admin_token')).to.be.ok;",
+                  "    pm.expect(pm.environment.get('generated_original_code')).to.be.ok;",
+                  "    pm.expect(pm.environment.get('generated_hashed_code')).to.be.ok;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Initialize environment variables if not set",
+          "if (!pm.environment.get('secret_key')) {",
+          "    pm.environment.set('secret_key', 'ZAOAQSr95FqNr7Q9hYjtcU1cq6e5CGEAhh7zFL9y-zw=');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "manu_admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gonxt_admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "secret_key",
+      "value": "ZAOAQSr95FqNr7Q9hYjtcU1cq6e5CGEAhh7zFL9y-zw=",
+      "type": "string"
+    },
+    {
+      "key": "secret_key_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "generated_code_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "generated_original_code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "generated_hashed_code",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
