@@ -1,7 +1,6 @@
 /**
  * Risk Assessment Service Layer
- * Handles risk calculations and analysis
- * Future: Replace with backend API calls
+ * Handles risk calculations and analysis with real API integration
  */
 
 import type {
@@ -12,66 +11,46 @@ import type {
   RiskSummary,
   RiskDistribution,
 } from "../types";
+import { riskApi } from "./riskApi";
 
 /**
- * Generate mock risk assessments
- * Future: apiClient.get("/risks")
+ * Fetch risk assessments from backend API
  */
-export const generateMockRisks = (): RiskAssessment[] => [
-  {
-    id: "RISK-001",
-    productId: "PRD-VAC-100",
-    productName: "Premium Vaccine",
-    riskLevel: "low",
-    riskScore: 15,
-    category: "counterfeit",
-    factors: [
-      { name: "NFC Tag Match", weight: 0.8, impact: 5, source: "NFC Scan" },
-      { name: "Supply Chain Verified", weight: 0.7, impact: 10, source: "Database" },
-    ],
-    detectedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    status: "resolved",
-    recommendations: ["Monitor next batch"],
-  },
-  {
-    id: "RISK-002",
-    productId: "PRD-ANT-50",
-    productName: "Antibiotics",
-    riskLevel: "high",
-    riskScore: 72,
-    category: "quality",
-    factors: [
-      { name: "Quality Score Low", weight: 0.9, impact: 70, source: "QA Report" },
-      { name: "Batch Delay", weight: 0.6, impact: 40, source: "Production" },
-    ],
-    detectedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    status: "active",
-    recommendations: [
-      "Halt production",
-      "Conduct full QA review",
-      "Contact supplier",
-    ],
-  },
-  {
-    id: "RISK-003",
-    productId: "PRD-VIT-200",
-    productName: "Vitamins",
-    riskLevel: "critical",
-    riskScore: 89,
-    category: "supply_chain",
-    factors: [
-      { name: "Supplier Offline", weight: 0.95, impact: 85, source: "Vendor Status" },
-      { name: "Regulatory Alert", weight: 0.8, impact: 75, source: "FDA" },
-    ],
-    detectedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    status: "active",
-    recommendations: [
-      "Find alternative supplier",
-      "File regulatory report",
-      "Notify customers",
-    ],
-  },
-];
+export const fetchRisks = async (): Promise<RiskAssessment[]> => {
+  return riskApi.getAllRisks();
+};
+
+/**
+ * Update risk status via API
+ */
+export const updateRiskStatus = async (
+  riskId: string,
+  status: 'active' | 'resolved',
+  notes?: string
+): Promise<RiskAssessment> => {
+  return riskApi.updateRiskStatus(riskId, status, notes);
+};
+
+/**
+ * Mitigate risk via API
+ */
+export const mitigateRisk = async (riskId: string): Promise<void> => {
+  return riskApi.mitigateRisk(riskId);
+};
+
+/**
+ * Escalate risk via API
+ */
+export const escalateRisk = async (riskId: string, reason: string): Promise<void> => {
+  return riskApi.escalateRisk(riskId, reason);
+};
+
+/**
+ * Resolve risk via API
+ */
+export const resolveRisk = async (riskId: string): Promise<void> => {
+  return riskApi.updateRiskStatus(riskId, 'resolved');
+};
 
 /**
  * Calculate risk summary from assessments
@@ -85,7 +64,7 @@ export const calculateRiskSummary = (
       acc[r.riskLevel]++;
       return acc;
     },
-    { critical: 0, high: 0, medium: 0, low: 0 }
+    { critical: 0, high: 0, medium: 0, low: 0 } as Record<RiskLevel, number>
   );
 
   const avgScore =
@@ -173,20 +152,4 @@ export const getRiskLevelColor = (riskLevel: RiskLevel): string => {
  */
 export const formatRiskScore = (score: number): string => {
   return `${Math.round(score)}/100`;
-};
-
-/**
- * Mitigate risk (future: API call)
- */
-export const mitigateRisk = async (_assessmentId: string): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  // Mock implementation
-};
-
-/**
- * Resolve risk (future: API call)
- */
-export const resolveRisk = async (_assessmentId: string): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  // Mock implementation
 };

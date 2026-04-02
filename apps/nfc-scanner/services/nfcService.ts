@@ -1,10 +1,11 @@
 /**
  * NFC Service Layer
- * Handles all NFC reading operations and data parsing
+ * Handles all NFC reading operations and data parsing with real API integration
  * NO direct component coupling - pure business logic
  */
 
 import type { NDEFRecord, ScanData, ScanResult } from "../types";
+import { nfcApi } from "./nfcApi";
 
 /**
  * Parse NDEF records into structured scan data
@@ -33,24 +34,14 @@ export const parseNDEFRecords = (records: NDEFRecord[]): ScanData | null => {
 };
 
 /**
- * Verify product with verification API
- * Future: Replace with actual backend call
+ * Verify product with backend verification API
  */
 export const verifyProduct = async (
-  _productId: string
-  // Future: Add API client parameter
+  productId: string
 ): Promise<ScanResult> => {
   try {
-    // Mock verification
-    // In production:
-    // const response = await apiClient.post(`/verify/${_productId}`);
-    // return response.verified ? "success" : "unmatch";
-
-    // Simulate async operation
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // 90% success rate for demo
-    return Math.random() > 0.1 ? "success" : "unmatch";
+    const result = await nfcApi.verifyProduct(productId);
+    return result;
   } catch (error) {
     console.error("Verification failed:", error);
     return "unknown";

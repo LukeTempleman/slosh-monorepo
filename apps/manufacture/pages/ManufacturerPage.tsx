@@ -1,6 +1,6 @@
 /**
  * Manufacturer Feature Page (Entry Point)
- * Orchestrates batch management UI
+ * Orchestrates batch management UI with real API integration
  */
 
 import { useState } from "react";
@@ -19,13 +19,16 @@ import { useToast } from "@/hooks/use-toast";
 import { MetricsOverview } from "../components/MetricsOverview";
 import { BatchList } from "../components/BatchList";
 import { useBatchManager } from "../hooks/useBatchManager";
+import { authService } from "../services/authService";
 import type { CreateBatchPayload } from "../types";
 
 const ManufacturerPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(authService.isAuthenticatedUser());
   const [credentials, setCredentials] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CreateBatchPayload>({
     productId: "",
@@ -45,19 +48,46 @@ const ManufacturerPage = () => {
     deleteBatch,
   } = useBatchManager();
 
-  const handleLogin = () => {
-    if (credentials.username && credentials.password) {
-      setIsLoggedIn(true);
-      toast({
-        title: "Login Successful",
-        description: "Welcome to Manufacturer Dashboard",
-      });
-    } else {
+  const handleLogin = async () => {
+    if (!credentials.username.trim() || !credentials.password.trim()) {
       toast({
         title: "Error",
-        description: "Please enter credentials",
+        description: "Please enter both username and password",
         variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      setIsLoggingIn(true);
+      setLoginError(null);
+      
+      const success = await authService.login(credentials.username, credentials.password);
+      
+      if (success) {
+        setIsLoggedIn(true);
+        toast({
+          title: "Login Successful",
+          description: "Welcome to Manufacturer Dashboard",
+        });
+      } else {
+        setLoginError("Invalid credentials. Please try again.");
+        toast({
+          title: "Login Failed",
+          description: "Invalid username or password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setLoginError(`Login failed: ${errorMessage}`);
+      toast({
+        title: "Login Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -66,7 +96,7 @@ const ManufacturerPage = () => {
       if (!formData.productId || !formData.productName || formData.quantity <= 0) {
         toast({
           title: "Validation Error",
-          description: "Please fill all fields",
+          description: "Please fill all required fields",
           variant: "destructive",
         });
         return;
@@ -85,9 +115,10 @@ const ManufacturerPage = () => {
         facilityId: "FAC-001",
       });
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create batch";
       toast({
         title: "Error",
-        description: "Failed to create batch",
+        description: message,
         variant: "destructive",
       });
     }
@@ -102,6 +133,11 @@ const ManufacturerPage = () => {
             <CardTitle>Manufacturer Dashboard</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {loginError && (
+              <div className="p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                {loginError}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium mb-2">Username</label>
               <input
@@ -112,6 +148,7 @@ const ManufacturerPage = () => {
                 }
                 className="w-full px-3 py-2 border rounded-lg"
                 placeholder="Enter username"
+                disabled={isLoggingIn}
               />
             </div>
             <div>
@@ -124,10 +161,15 @@ const ManufacturerPage = () => {
                 }
                 className="w-full px-3 py-2 border rounded-lg"
                 placeholder="Enter password"
+                disabled={isLoggingIn}
               />
             </div>
-            <Button onClick={handleLogin} className="w-full">
-              Login
+            <Button 
+              onClick={handleLogin} 
+              className="w-full"
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? "Logging in..." : "Login"}
             </Button>
           </CardContent>
         </Card>

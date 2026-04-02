@@ -29,7 +29,7 @@ export const useNFCScanner = (options: UseNFCScannerOptions = {}) => {
   }, []);
 
   /**
-   * Start NFC scan
+   * Start NFC scan with real API integration
    * Flow: Prompt → Read → Parse → Verify → Result
    */
   const startScan = useCallback(async () => {
@@ -60,28 +60,33 @@ export const useNFCScanner = (options: UseNFCScannerOptions = {}) => {
 
           setScannedData(JSON.stringify(scanData));
 
-          // Verify product with backend
-          const verificationResult = await verifyProduct(scanData.nfcId);
+          // Verify product with backend with timeout management
+          const verifyPromise = verifyProduct(scanData.nfcId);
+          const timeoutPromise = new Promise<ScanResult>((_, reject) => 
+            setTimeout(() => reject(new Error('Verification timed out')), 10000)
+          );
+          
+          const verificationResult = await Promise.race([verifyPromise, timeoutPromise]);
           setScanResult(verificationResult);
 
           setIsScanning(false);
           options.onScanComplete?.(verificationResult);
         } catch (err) {
-          setError(err instanceof Error ? err.message : "Parse error");
+          setError(err instanceof Error ? err.message : "Product verification failed");
           setIsScanning(false);
         }
       });
 
       // Error listener
-      reader.addEventListener("error", () => {
-        setError("Failed to read NFC tag");
+      reader.addEventListener("error", (event: ErrorEvent) => {
+        setError(`NFC read error: ${event.message || 'Failed to read NFC tag'}`);
         setIsScanning(false);
       });
 
       // Initiate scan
       await reader.scan();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Scan failed";
+      const message = err instanceof Error ? err.message : "Scan initiation failed";
       setError(message);
       setIsScanning(false);
     }

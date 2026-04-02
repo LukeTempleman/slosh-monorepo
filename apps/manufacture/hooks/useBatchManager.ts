@@ -1,12 +1,12 @@
 /**
  * useBatchManager Hook
- * Manages batch operations and state
+ * Manages batch operations and state with real API integration
  * Isolated from UI - can be tested independently
  */
 
 import { useState, useCallback, useEffect } from "react";
 import {
-  generateMockBatches,
+  fetchBatches,
   calculateMetrics,
   createBatch as createBatchService,
   updateBatchStatus as updateBatchStatusService,
@@ -28,17 +28,20 @@ export const useBatchManager = () => {
   }, []);
 
   /**
-   * Fetch batches from service
+   * Fetch batches from API
    */
   const loadBatches = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = generateMockBatches();
+      const data = await fetchBatches();
       setBatches(data);
       setMetrics(calculateMetrics(data));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load batches");
+      const message = err instanceof Error ? err.message : "Failed to load batches";
+      setError(message);
+      // Show user-friendly error message
+      throw new Error(`Could not load batches: ${message}. Please check your connection and try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -52,14 +55,26 @@ export const useBatchManager = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const newBatch = await createBatchService(payload);
-        setBatches([newBatch, ...batches]);
-        setMetrics(calculateMetrics([newBatch, ...batches]));
+        const newBatchPromise = createBatchService(payload);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        );
+        
+        const newBatch = await Promise.race([newBatchPromise, timeoutPromise]) as any;
+        
+        setBatches(prevBatches => [newBatch, ...prevBatches]);
+        setMetrics(prevMetrics => {
+          if (prevMetrics) {
+            return calculateMetrics([newBatch, ...batches]);
+          }
+          return calculateMetrics([newBatch]);
+        });
         return newBatch;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Creation failed";
         setError(message);
-        throw err;
+        // Provide user feedback about the error
+        throw new Error(`Failed to create batch: ${message}. Please check your input and try again.`);
       } finally {
         setIsLoading(false);
       }
@@ -75,12 +90,18 @@ export const useBatchManager = () => {
       try {
         setIsLoading(true);
         setError(null);
-
-        const updated = await updateBatchStatusService(
+        
+        const updatePromise = updateBatchStatusService(
           batchId,
           status as any,
           qualityScore
         );
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        );
+        
+        const updated = await Promise.race([updatePromise, timeoutPromise]) as any;
 
         const newBatches = batches.map((b) => (b.id === batchId ? updated : b));
         setBatches(newBatches);
@@ -89,7 +110,8 @@ export const useBatchManager = () => {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Update failed";
         setError(message);
-        throw err;
+        // Provide user feedback about the error
+        throw new Error(`Failed to update batch status: ${message}. Please try again.`);
       } finally {
         setIsLoading(false);
       }
@@ -105,7 +127,13 @@ export const useBatchManager = () => {
       try {
         setIsLoading(true);
         setError(null);
-        await deleteBatchService(batchId);
+        
+        const deletePromise = deleteBatchService(batchId);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        );
+        
+        await Promise.race([deletePromise, timeoutPromise]);
 
         const newBatches = batches.filter((b) => b.id !== batchId);
         setBatches(newBatches);
@@ -113,7 +141,8 @@ export const useBatchManager = () => {
       } catch (err) {
         const message = err instanceof Error ? err.message : "Deletion failed";
         setError(message);
-        throw err;
+        // Provide user feedback about the error
+        throw new Error(`Failed to delete batch: ${message}. Please try again.`);
       } finally {
         setIsLoading(false);
       }
