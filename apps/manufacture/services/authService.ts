@@ -14,8 +14,8 @@ class AuthService {
     try {
       const response = await manufacturingApi.login({ username, password });
       
-      if (response.success && response.data.token) {
-        manufacturingApi.setAuthToken(response.data.token);
+      if (response.success && response.data.access_token) {
+        manufacturingApi.setAuthToken(response.data.access_token);
         this.isAuthenticated = true;
         
         // Store user data if provided in response
@@ -44,8 +44,8 @@ class AuthService {
     try {
       const response = await manufacturingApi.register({ username, email, password });
       
-      if (response.success && response.data.token) {
-        manufacturingApi.setAuthToken(response.data.token);
+      if (response.success && response.data.access_token) {
+        manufacturingApi.setAuthToken(response.data.access_token);
         this.isAuthenticated = true;
         return true;
       }

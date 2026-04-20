@@ -1,68 +1,71 @@
-/**
- * VerifiAI Feature Page (Entry Point)
- * Orchestrates the feature - connects hooks, services, and components
- */
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Smartphone, RefreshCw, Radio, BarChart3, CheckCircle, AlertTriangle, Shield, Clock, TrendingUp, Target, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { ScannerUI } from "../components/ScannerUI";
-import { useNFCScanner } from "../hooks/useNFCScanner";
+
+const tabs = ["Scan", "Results", "History", "Analytics"] as const;
+type Tab = typeof tabs[number];
+
+const kpis = [
+  { label: "Today's Scans", value: "147", icon: BarChart3 },
+  { label: "Verified", value: "142", icon: CheckCircle },
+  { label: "Suspicious", value: "5", icon: AlertTriangle },
+  { label: "Authenticity", value: "96.6%", icon: Shield },
+];
+
+const historyData = [
+  { product: "Jameson Irish Whiskey", status: "Verified", location: "JHB CBD", time: "14:32" },
+  { product: "Chivas Regal 12", status: "Suspicious", location: "Cape Town", time: "13:15" },
+  { product: "Absolut Vodka", status: "Verified", location: "Durban", time: "11:45" },
+];
+
+const products = [
+  { name: "Jameson Irish Whiskey", status: "authentic" as const, statusLabel: "✓ AUTHENTIC", sku: "JAM-001", batch: "2024-09", actions: ["View Details", "Report"] },
+  { name: "Unknown Spirit", status: "suspicious" as const, statusLabel: "⚠ SUSPICIOUS", sku: "Unknown", batch: "No Batch Info", actions: ["Investigate", "Block"] },
+];
 
 const VerifiAIPage = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [credentials, setCredentials] = useState({ username: "", password: "" });
-
-  // Use the NFC scanner hook
-  const {
-    isSupported,
-    isScanning,
-    scanResult,
-    error,
-    checkNFCSupport,
-    startScan,
-    stopScan,
-    reset,
-  } = useNFCScanner({
-    onScanComplete: (result) => {
-      if (result === "success") {
-        toast({
-          title: "✓ Product Verified",
-          description: "Authentic product confirmed",
-        });
-      } else if (result === "unmatch") {
-        toast({
-          title: "⚠️ Counterfeit Detected",
-          description: "This product may be counterfeit",
-          variant: "destructive",
-        });
-      }
-    },
-  });
+  const [activeTab, setActiveTab] = useState<Tab>("Scan");
 
   // Initially check for NFC support
   useEffect(() => {
     checkNFCSupport();
+    // Check if already logged in
+    const token = localStorage.getItem('nfcAuthToken');
+    if (token) {
+      setIsLoggedIn(true);
+    }
   }, [checkNFCSupport]);
 
-  const handleLogin = () => {
-    if (credentials.username && credentials.password) {
-      setIsLoggedIn(true);
-      toast({
-        title: "Login Successful",
-        description: "Welcome to VerifiAI Scanner",
-      });
-    } else {
+  const handleLogin = async () => {
+    if (!credentials.username || !credentials.password) {
       toast({
         title: "Error",
-        description: "Please enter credentials",
+        description: "Please enter username and password",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const response = await gonxtApi.login(credentials);
+      
+      if (response.success && response.data.access_token) {
+        gonxtApi.setAuthToken(response.data.access_token);
+        setIsLoggedIn(true);
+        toast({
+          title: "Login Successful",
+          description: "Welcome to VerifiAI Scanner",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -75,32 +78,32 @@ const VerifiAIPage = () => {
             <CardTitle>VerifiAI Scanner</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Username</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
                 type="text"
                 value={credentials.username}
                 onChange={(e) =>
                   setCredentials({ ...credentials, username: e.target.value })
                 }
-                className="w-full px-3 py-2 border rounded-lg"
                 placeholder="Enter username"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
                 type="password"
                 value={credentials.password}
                 onChange={(e) =>
                   setCredentials({ ...credentials, password: e.target.value })
                 }
-                className="w-full px-3 py-2 border rounded-lg"
                 placeholder="Enter password"
               />
             </div>
-            <Button onClick={handleLogin} className="w-full">
-              Login
+            <Button onClick={handleLogin} className="w-full" disabled={isLoggingIn}>
+              {isLoggingIn ? "Logging in..." : "Login"}
             </Button>
           </CardContent>
         </Card>

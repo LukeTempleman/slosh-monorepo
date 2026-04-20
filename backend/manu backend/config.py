@@ -12,7 +12,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        'postgresql://user:password@localhost:5432/slosh_db'
+        'postgresql://slosh_user:slosh_password@localhost:5433/slosh_db'
     )
 
 class ProductionConfig(Config):

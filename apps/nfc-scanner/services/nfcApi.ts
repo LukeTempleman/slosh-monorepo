@@ -4,7 +4,7 @@
  * Communicates with the GONXT verification backend
  */
 
-import { gonxtApi } from '../../manufacture/services/apiClient';
+import { gonxtApi } from './apiClient';
 import type { ScanResult, VerificationResponse } from '../types';
 
 class NFCApiService {

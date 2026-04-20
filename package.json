@@ -1,0 +1,19 @@
+{
+  "name": "slosh-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Slosh combined monorepo with backend services and frontend applications",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "type-check": "npm run type-check --workspaces"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

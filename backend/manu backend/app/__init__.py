@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -16,10 +17,12 @@ def create_app(config_name='development'):
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
+    CORS(app)
     
     # Register blueprints
-    from app.routes import auth_bp, secret_key_bp, health_bp
+    from app.routes import auth_bp, manufacturers_bp, secret_key_bp, health_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(manufacturers_bp, url_prefix='/api/manufacturers')
     app.register_blueprint(secret_key_bp, url_prefix='/api')
     app.register_blueprint(health_bp, url_prefix='/api')
     

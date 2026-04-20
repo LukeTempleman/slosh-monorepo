@@ -57,16 +57,16 @@ export const BatchList = ({
       {/* Filter */}
       <div className="flex gap-2">
         <Select
-          value={filterStatus || ""}
+          value={filterStatus || "all"}
           onValueChange={(value) =>
-            setFilterStatus((value as BatchStatus) || null)
+            setFilterStatus(value === "all" ? null : (value as BatchStatus))
           }
         >
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="production">Production</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>

@@ -117,34 +117,3 @@ export const formatDate = (date: Date): string => {
 export const isBatchEditable = (batch: Batch): boolean => {
   return batch.status === "pending" || batch.status === "production";
 };
-
-/**
- * Get batch status label
- */
-export const getStatusLabel = (status: BatchStatus): string => {
-  const labels: Record<BatchStatus, string> = {
-    pending: "Pending",
-    production: "In Production",
-    completed: "Completed",
-    rejected: "Rejected",
-  };
-  return labels[status];
-};
-
-/**
- * Format date for display
- */
-export const formatDate = (date: Date): string => {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(date));
-};
-
-/**
- * Check if batch is editable
- */
-export const isBatchEditable = (batch: Batch): boolean => {
-  return batch.status === "pending" || batch.status === "production";
-};

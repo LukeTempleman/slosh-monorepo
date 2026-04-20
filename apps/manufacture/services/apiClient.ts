@@ -53,14 +53,14 @@ class ApiClient {
 
   // Authentication endpoints
   async login(credentials: { username: string; password: string }) {
-    return this.request<{ token: string; user: any }>('/api/auth/login', {
+    return this.request<{ access_token: string; user: any }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
   }
 
   async register(userData: { username: string; email: string; password: string }) {
-    return this.request<{ token: string; user: any }>('/api/auth/register', {
+    return this.request<{ access_token: string; user: any }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -219,4 +219,4 @@ class GONXTApiClient {
   }
 }
 
-export const gonxtApi = new GONXTApiClient('http://localhost:5000');
+export const gonxtApi = new GONXTApiClient('http://localhost:5001');

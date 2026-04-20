@@ -1,4 +1,4 @@
-version: '3.8'
++-version: '3.8'
 
 services:
   # ============================================================
@@ -31,7 +31,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: gonxt_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@gonxt.local
+      PGADMIN_DEFAULT_EMAIL: admin@gonxt.com
       PGADMIN_DEFAULT_PASSWORD: admin@123
     ports:
       - "5050:80"
@@ -100,7 +100,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: manu_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@manu.local
+      PGADMIN_DEFAULT_EMAIL: admin@manu.com
       PGADMIN_DEFAULT_PASSWORD: admin@123
     ports:
       - "5051:80"
